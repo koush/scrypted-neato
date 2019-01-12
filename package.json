@@ -8,9 +8,12 @@
       "scrypted-webpack": "scrypted-webpack"
    },
    "devDependencies": {
-      "scrypted-deploy": "^1.0.9"
+      "exports-loader": "^0.7.0",
+      "scrypted-deploy": "^1.0.9",
+      "webpack-merge": "^4.2.1"
    },
    "dependencies": {
+      "crypto-js": "^3.1.9-1",
       "node-botvac": "koush/node-botvac"
    }
 }
