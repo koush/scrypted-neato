@@ -8,9 +8,9 @@
       "scrypted-webpack": "scrypted-webpack"
    },
    "devDependencies": {
-      "scrypted-deploy": "^1.0.6"
+      "scrypted-deploy": "^1.0.9"
    },
    "dependencies": {
-      "axios": "^0.18.0"
+      "node-botvac": "koush/node-botvac"
    }
 }
