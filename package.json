@@ -1,4 +1,9 @@
 {
+   "name": "@scrypted/neato",
+   "version": "0.0.1",
+   "description": "A Neato plugin for Scrypted",
+   "author": "Scrypted",
+   "license": "Apache",
    "scripts": {
       "prescrypted-vscode-launch": "scrypted-webpack",
       "scrypted-vscode-launch": "scrypted-deploy-debug",
@@ -9,7 +14,7 @@
    },
    "devDependencies": {
       "exports-loader": "^0.7.0",
-      "scrypted-deploy": "^1.0.9",
+      "scrypted-deploy": "^1.1.5",
       "webpack-merge": "^4.2.1"
    },
    "dependencies": {

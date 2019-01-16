@@ -84,6 +84,8 @@ DeviceProvider.prototype.updateRobots = function (robots) {
         }
     })
 
+    log.i(`found robots: ${JSON.stringify(devices)}`);
+
     deviceManager.onDevicesChanged({
         devices
     });
@@ -111,4 +113,4 @@ client.authorize(username, password, false, function (error) {
 });
 
 
-exports.result = deviceProvider;
+export default deviceProvider;
