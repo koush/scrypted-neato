@@ -1,6 +1,6 @@
 {
    "name": "@scrypted/neato",
-   "version": "0.0.1",
+   "version": "0.0.2",
    "description": "A Neato plugin for Scrypted",
    "author": "Scrypted",
    "license": "Apache",
@@ -11,6 +11,15 @@
       "scrypted-debug": "scrypted-debug",
       "scrypted-deploy": "scrypted-deploy",
       "scrypted-webpack": "scrypted-webpack"
+   },
+   "keywords": [
+      "neato",
+      "scrypted",
+      "plugin"
+   ],
+   "scrypted": {
+      "name": "Scrypted Visual Studio Code Sample Library",
+      "type": "Library"
    },
    "devDependencies": {
       "exports-loader": "^0.7.0",
