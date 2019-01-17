@@ -1,6 +1,6 @@
 {
    "name": "@scrypted/neato",
-   "version": "0.0.3",
+   "version": "0.0.6",
    "description": "A Neato plugin for Scrypted",
    "author": "Scrypted",
    "license": "Apache",
@@ -19,16 +19,16 @@
       "plugin"
    ],
    "scrypted": {
-      "name": "Scrypted Visual Studio Code Sample Library",
-      "type": "Library"
+      "name": "Neato Controller",
+      "type": "DeviceProvider"
    },
    "devDependencies": {
       "exports-loader": "^0.7.0",
-      "scrypted-deploy": "^1.1.5",
+      "scrypted-deploy": "^1.2.3",
       "webpack-merge": "^4.2.1"
    },
    "dependencies": {
       "crypto-js": "^3.1.9-1",
-      "node-botvac": "koush/node-botvac#3a8ce6fd2a2277319fa8cd8e506c739b580efcc4"
+      "node-botvac": "github:koush/node-botvac#3a8ce6fd2a2277319fa8cd8e506c739b580efcc4"
    }
 }
