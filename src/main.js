@@ -3,15 +3,6 @@ import "core-js/modules/es6.promise";
 var botvac = require('node-botvac');
 var client = new botvac.Client();
 
-const username = scriptSettings.getString('username');
-const password = scriptSettings.getString('password');
-if (!username || !password) {
-    const err = 'You must provide "username" and "password" values in your Script Settings.'
-    log.a(err);
-    throw new Error(err);
-}
-log.clearAlerts();
-
 function Neato(robot) {
     this.robot = robot;
 }
@@ -94,15 +85,58 @@ DeviceProvider.prototype.updateRobots = function (robots) {
     });
 }
 
+DeviceProvider.prototype.getOauthUrl = function() {
+    var options = {
+        clientId: '44f85521f7730c9f213f25f5e36f080d1e274414f6138ff23fab614faa34fd22',
+        scopes: 'control_robots+maps',
+        redirectUrl: 'https://home.scrypted.app/oauth/callback'
+    }
+    var url = "https://apps.neatorobotics.com/oauth2/authorize?client_id=" + options["clientId"] + "&scope=" + options["scopes"] + "&response_type=token&redirect_uri=" + options["redirectUrl"];
+
+    return url;
+}
+
+function setClientToken(token) {
+    client._token = token;
+    client._tokenType = 'Bearer ';
+}
+
+DeviceProvider.prototype.onOauthCallback = function(callbackUrl) {
+    var params = callbackUrl.split('#')[1].split("&");
+
+    var token;
+    var authError;
+    var authErrorDescription;
+    params.forEach((item, index) => {
+        var key = item.split("=")[0] || "";
+        var value = item.split("=")[1] || "";
+
+        if (key.localeCompare("access_token") == 0) {
+            token = value;
+        }
+        else if (key.localeCompare("error") == 0) {
+            authError = value;
+        }
+        else if (key.localeCompare("error_description") == 0) {
+            authErrorDescription = value.replace(/\+/g, " ");
+        }
+    });
+
+    if (authError) {
+        log.a(`There was an error logging in with Neato: ${authError} ${authErrorDescription}`);
+        return;
+    }
+
+    scriptSettings.putString('token', token);
+    setClientToken(token);
+    getRobots();
+}
+
 var deviceProvider = new DeviceProvider();
 
 //authorize
-client.authorize(username, password, false, function (error) {
-    if (error) {
-        log.a(`Error authorizing with Neato servers: ${error}`);
-        throw error;
-    }
 
+function getRobots() {
     log.clearAlerts();
     //get your robots
     client.getRobots(function (error, robots) {
@@ -117,7 +151,28 @@ client.authorize(username, password, false, function (error) {
 
         deviceProvider.updateRobots(validRobots);
     });
-});
+}
 
+const username = scriptSettings.getString('username');
+const password = scriptSettings.getString('password');
+const token = scriptSettings.getString('token');
+if (token) {
+    setClientToken(token);
+    getRobots();
+}
+else if (username && password) {
+    log.clearAlerts();
+    client.authorize(username, password, false, function (error) {
+        if (error) {
+            log.a(`Error authorizing with Neato servers: ${error}`);
+            throw error;
+        }
+
+        getRobots();
+    });
+}
+else {
+    log.a('You must provide "username" and "password" values in your Script Settings or use the Authorize button to Log in with Neato.');
+}
 
 export default deviceProvider;
