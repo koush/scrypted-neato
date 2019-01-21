@@ -6,8 +6,11 @@ var client = new botvac.Client();
 const username = scriptSettings.getString('username');
 const password = scriptSettings.getString('password');
 if (!username || !password) {
-    throw new Error('You must provide "username" and "password" values in your Script Settings.');
+    const err = 'You must provide "username" and "password" values in your Script Settings.'
+    log.a(err);
+    throw new Error(err);
 }
+log.clearAlerts();
 
 function Neato(robot) {
     this.robot = robot;
@@ -96,15 +99,19 @@ var deviceProvider = new DeviceProvider();
 //authorize
 client.authorize(username, password, false, function (error) {
     if (error) {
+        log.a(`Error authorizing with Neato servers: ${error}`);
         throw error;
     }
 
+    log.clearAlerts();
     //get your robots
     client.getRobots(function (error, robots) {
         if (error) {
-            console.log(error);
-            return;
+            log.a(`Error retrieving Neato robots: ${error}`);
+            throw error;
         }
+        log.clearAlerts();
+
         var validRobots = robots
             .filter(robot => robot._serial && robot._secret);
 
