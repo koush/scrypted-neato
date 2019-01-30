@@ -1,6 +1,6 @@
 {
    "name": "@scrypted/neato",
-   "version": "0.1.1",
+   "version": "0.1.2",
    "description": "A Neato plugin for Scrypted",
    "author": "Scrypted",
    "license": "Apache",
@@ -28,7 +28,7 @@
    },
    "devDependencies": {
       "exports-loader": "^0.7.0",
-      "scrypted-deploy": "^1.2.3",
+      "scrypted-deploy": "^1.2.7",
       "webpack-merge": "^4.2.1"
    },
    "dependencies": {
