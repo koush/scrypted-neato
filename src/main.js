@@ -17,9 +17,6 @@ const States = {
     StartStop: function (s) {
         return s && s.state != 1;
     },
-    Paused: function (s) {
-        return s && s.state == 3;
-    },
     Dock: function(s) {
         return s && s.details && s.details.isDocked;
     },
@@ -60,7 +57,7 @@ Neato.prototype.isRunning = function () {
 }
 
 Neato.prototype.isPaused = function () {
-    return States.Paused(this.state);
+    return this.state && this.state.state == 3;
 }
 
 Neato.prototype.isDocked = function () {
