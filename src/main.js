@@ -3,8 +3,52 @@ import "core-js/modules/es6.promise";
 var botvac = require('node-botvac');
 var client = new botvac.Client();
 
-function Neato(robot) {
+function Neato(robot, events) {
     this.robot = robot;
+    this.events = events;
+
+    this.refresher = (err, data) => {
+        log.d(data);
+        this.refresh();
+    }
+}
+
+const States = {
+    StartStop: function (s) {
+        return s && s.state != 1;
+    },
+    Paused: function (s) {
+        return s && s.state == 3;
+    },
+    Dock: function(s) {
+        return s && s.details && s.details.isDocked;
+    },
+    Battery: function(s) {
+        return (s && s.details && s.details.charge) || 100;
+    }
+}
+
+Neato.prototype.refresh = function (cb) {
+    this.robot.getState((error, state) => {
+        if (state) {
+            log.d(JSON.stringify(state));
+            var oldState = this.state;
+            this.state = state;
+
+            if (oldState) {
+                for (var stateGetter of this.events) {
+                    var newValue = States[stateGetter](state);
+                    // don't bother detecting if the state has not changed. denoising will be done
+                    // at the platform level. this is also necessary for external calls to
+                    // listen for set events, even if nothing has changed.
+                    deviceManager.onDeviceEvent(this.robot._serial, stateGetter, newValue)
+                }
+            }
+        }
+        if (cb) {
+            cb();
+        }
+    })
 }
 
 Neato.prototype.isPausable = function () {
@@ -12,68 +56,65 @@ Neato.prototype.isPausable = function () {
 }
 
 Neato.prototype.isRunning = function () {
-    return true;
+    return States.StartStop(this.state);
 }
 
 Neato.prototype.isPaused = function () {
-    return true;
+    return States.Paused(this.state);
+}
+
+Neato.prototype.isDocked = function () {
+    return States.Dock(this.state);
+}
+
+Neato.prototype.getBatteryLevel = function () {
+    return States.Battery(this.state);
 }
 
 Neato.prototype.start = function () {
-    this.robot.getState(function (error, result) {
-        this.robot.startCleaning(function (data) {
-        });
-    }.bind(this));
+    this.refresh(() => this.robot.startCleaning(this.refresher));
 }
 
 Neato.prototype.dock = function () {
-    this.robot.getState(function (error, result) {
-        this.robot.sendToBase(function (data) {
-        });
-    }.bind(this));
+    this.refresh(() => this.robot.sendToBase(this.refresher));
 }
 
 Neato.prototype.pause = function () {
-    this.robot.getState(function (error, result) {
-        this.robot.pauseCleaning(function (data) {
-        });
-    }.bind(this));
+    this.refresh(() => this.robot.pauseCleaning(this.refresher));
 }
 
 Neato.prototype.stop = function () {
-    this.robot.getState(function (error, result) {
-        this.robot.stopCleaning(function (data) {
-        });
-    }.bind(this));
+    this.refresh(() => this.robot.stopCleaning(this.refresher));
 }
 
 Neato.prototype.resume = function () {
-    this.robot.getState(function (error, result) {
-        this.robot.resumeCleaning(function (data) {
-        });
-    }.bind(this));
+    this.refresh(() => this.robot.resumeCleaning(this.refresher));
 }
 
 function DeviceProvider() {
-};
+}
 
 DeviceProvider.prototype.getDevice = function (id) {
-    var robot = this.robots && this.robots[id];
-    if (robot)
-        return new Neato(robot);
+    return this.robots && this.robots[id];
 }
 
 DeviceProvider.prototype.updateRobots = function (robots) {
+    var interfaces = ['StartStop', 'Dock', 'Battery'];
+    var events = interfaces.slice();
+
+    interfaces.push('Refresh');
+
     this.robots = {};
     for (var robot of robots) {
-        this.robots[robot._serial] = robot;
+        this.robots[robot._serial] = new Neato(robot, events);
     }
 
     var devices = robots.map(robot => {
         return {
             name: robot.name,
             id: robot._serial,
-            interfaces: ['StartStop', 'Dock'],
+            interfaces: interfaces,
+            events: events,
             type: 'Vacuum',
         }
     })
@@ -85,7 +126,7 @@ DeviceProvider.prototype.updateRobots = function (robots) {
     });
 }
 
-DeviceProvider.prototype.getOauthUrl = function() {
+DeviceProvider.prototype.getOauthUrl = function () {
     var options = {
         clientId: '44f85521f7730c9f213f25f5e36f080d1e274414f6138ff23fab614faa34fd22',
         scopes: 'control_robots+maps',
@@ -101,7 +142,7 @@ function setClientToken(token) {
     client._tokenType = 'Bearer ';
 }
 
-DeviceProvider.prototype.onOauthCallback = function(callbackUrl) {
+DeviceProvider.prototype.onOauthCallback = function (callbackUrl) {
     var params = callbackUrl.split('#')[1].split("&");
 
     var token;
