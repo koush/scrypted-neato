@@ -15,13 +15,13 @@ function Neato(robot, events) {
 
 const States = {
     StartStop: function (s) {
-        return s && s.state != 1;
+        return (s && s.state != 1) || false;
     },
     Dock: function(s) {
-        return s && s.details && s.details.isDocked;
+        return (s && s.details && s.details.isDocked) || false;
     },
     Battery: function(s) {
-        return (s && s.details && s.details.charge) || 100;
+        return (s && s.details && s.details.charge) || 0;
     }
 }
 
