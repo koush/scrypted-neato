@@ -1,7 +1,9 @@
-import "core-js/modules/es6.promise";
+const sdk = require('@scrypted/sdk').default;
 
 var botvac = require('node-botvac');
 var client = new botvac.Client();
+
+const {deviceManager, log} = sdk;
 
 function Neato(robot, events) {
     this.robot = robot;

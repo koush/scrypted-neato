@@ -1,4 +1,4 @@
-const defaultWebpackConfig = require('@scrypted/sdk').getDefaultWebpackConfig();
+const defaultWebpackConfig = require('@scrypted/sdk/bin').getDefaultWebpackConfig();
 const merge = require('webpack-merge');
 const path = require('path');
 
