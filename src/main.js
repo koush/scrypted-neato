@@ -88,14 +88,14 @@ Neato.prototype.resume = function () {
     this.refresh(() => this.robot.resumeCleaning(this.refresher));
 }
 
-function DeviceProvider() {
+function NeatoController() {
 }
 
-DeviceProvider.prototype.getDevice = function (id) {
+NeatoController.prototype.getDevice = function (id) {
     return this.robots && this.robots[id];
 }
 
-DeviceProvider.prototype.updateRobots = function (robots) {
+NeatoController.prototype.updateRobots = function (robots) {
     var interfaces = ['StartStop', 'Dock', 'Battery'];
     var events = interfaces.slice();
 
@@ -109,7 +109,7 @@ DeviceProvider.prototype.updateRobots = function (robots) {
     var devices = robots.map(robot => {
         return {
             name: robot.name,
-            id: robot._serial,
+            nativeId: robot._serial,
             interfaces: interfaces,
             events: events,
             type: 'Vacuum',
@@ -123,7 +123,7 @@ DeviceProvider.prototype.updateRobots = function (robots) {
     });
 }
 
-DeviceProvider.prototype.getOauthUrl = function () {
+NeatoController.prototype.getOauthUrl = function () {
     var options = {
         clientId: '44f85521f7730c9f213f25f5e36f080d1e274414f6138ff23fab614faa34fd22',
         scopes: 'control_robots+maps',
@@ -139,7 +139,7 @@ function setClientToken(token) {
     client._tokenType = 'Bearer ';
 }
 
-DeviceProvider.prototype.onOauthCallback = function (callbackUrl) {
+NeatoController.prototype.onOauthCallback = function (callbackUrl) {
     var params = callbackUrl.split('#')[1].split("&");
 
     var token;
@@ -170,7 +170,7 @@ DeviceProvider.prototype.onOauthCallback = function (callbackUrl) {
     getRobots();
 }
 
-var deviceProvider = new DeviceProvider();
+var neatoController = new NeatoController();
 
 //authorize
 
@@ -187,7 +187,7 @@ function getRobots() {
         var validRobots = robots
             .filter(robot => robot._serial && robot._secret);
 
-        deviceProvider.updateRobots(validRobots);
+        neatoController.updateRobots(validRobots);
     });
 }
 
@@ -213,4 +213,4 @@ else {
     log.a('You must provide "username" and "password" values in your Script Settings or use the Authorize button to Log in with Neato.');
 }
 
-export default deviceProvider;
+export default neatoController;
