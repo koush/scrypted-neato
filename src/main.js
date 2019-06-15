@@ -1,94 +1,66 @@
-const sdk = require('@scrypted/sdk').default;
+import sdk from '@scrypted/sdk';
+import {ScryptedDeviceBase} from '@scrypted/sdk';
 
 var botvac = require('node-botvac');
 var client = new botvac.Client();
 
 const {deviceManager, log} = sdk;
 
-function Neato(robot, events) {
-    this.robot = robot;
-    this.events = events;
+class Neato extends ScryptedDeviceBase {
+    constructor(nativeId, robot, events) {
+        super(nativeId);
+        this.robot = robot;
+        this.events = events;
 
-    this.refresher = (err, data) => {
-        log.d(data);
-        this.refresh();
+        this.refresher = (err, data) => {
+            log.d(data);
+            this.refresh();
+        }
     }
-}
 
-const States = {
-    StartStop: function (s) {
-        return (s && s.state != 1) || false;
-    },
-    Dock: function(s) {
-        return (s && s.details && s.details.isDocked) || false;
-    },
-    Battery: function(s) {
-        return (s && s.details && s.details.charge) || 0;
+    refresh(refreshInterface, userInitiated) {
+        this._refresh();
     }
-}
 
-Neato.prototype.refresh = function (cb) {
-    this.robot.getState((error, state) => {
-        if (state) {
-            log.d(JSON.stringify(state));
-            var oldState = this.state;
-            this.state = state;
+    _refresh(cb) {
+        this.robot.getState((error, state) => {
+            this.log.d(JSON.stringify(state));
+            this.running = (state && state.state != 1) || false
+            this.docked =  (state && state.details && state.details.isDocked) || false;
+            this.paused = (state && state.state == 3) || false;
+            this.batteryLevel = (state && state.details && state.details.charge) || 0;
 
-            if (oldState) {
-                for (var stateGetter of this.events) {
-                    var newValue = States[stateGetter](state);
-                    // don't bother detecting if the state has not changed. denoising will be done
-                    // at the platform level. this is also necessary for external calls to
-                    // listen for set events, even if nothing has changed.
-                    deviceManager.onDeviceEvent(this.robot._serial, stateGetter, newValue)
-                }
+            if (cb) {
+                cb();
             }
-        }
-        if (cb) {
-            cb();
-        }
-    })
+        })
+    }
+
+    isPausable() {
+        return true;
+    }
+
+    start() {
+        this._refresh(() => this.robot.startCleaning(this.refresher));
+    }
+
+    dock() {
+        this._refresh(() => this.robot.sendToBase(this.refresher));
+    }
+
+    pause() {
+        this._refresh(() => this.robot.pauseCleaning(this.refresher));
+    }
+
+    stop() {
+        this._refresh(() => this.robot.stopCleaning(this.refresher));
+    }
+
+    resume() {
+        this._refresh(() => this.robot.resumeCleaning(this.refresher));
+    }
 }
 
-Neato.prototype.isPausable = function () {
-    return true;
-}
-
-Neato.prototype.isRunning = function () {
-    return States.StartStop(this.state);
-}
-
-Neato.prototype.isPaused = function () {
-    return this.state && this.state.state == 3;
-}
-
-Neato.prototype.isDocked = function () {
-    return States.Dock(this.state);
-}
-
-Neato.prototype.getBatteryLevel = function () {
-    return States.Battery(this.state);
-}
-
-Neato.prototype.start = function () {
-    this.refresh(() => this.robot.startCleaning(this.refresher));
-}
-
-Neato.prototype.dock = function () {
-    this.refresh(() => this.robot.sendToBase(this.refresher));
-}
-
-Neato.prototype.pause = function () {
-    this.refresh(() => this.robot.pauseCleaning(this.refresher));
-}
-
-Neato.prototype.stop = function () {
-    this.refresh(() => this.robot.stopCleaning(this.refresher));
-}
-
-Neato.prototype.resume = function () {
-    this.refresh(() => this.robot.resumeCleaning(this.refresher));
-}
 
 function NeatoController() {
 }
@@ -105,7 +77,7 @@ NeatoController.prototype.updateRobots = function (robots) {
 
     this.robots = {};
     for (var robot of robots) {
-        this.robots[robot._serial] = new Neato(robot, events);
+        this.robots[robot._serial] = new Neato(robot._serial, robot, events);
     }
 
     var devices = robots.map(robot => {
@@ -167,7 +139,7 @@ NeatoController.prototype.onOauthCallback = function (callbackUrl) {
         return;
     }
 
-    scriptSettings.putString('token', token);
+    localStorage.getItem('token', token);
     setClientToken(token);
     getRobots();
 }
@@ -193,9 +165,9 @@ function getRobots() {
     });
 }
 
-const username = scriptSettings.getString('username');
-const password = scriptSettings.getString('password');
-const token = scriptSettings.getString('token');
+const username = localStorage.getItem('username');
+const password = localStorage.getItem('password');
+const token = localStorage.getItem('token');
 if (token) {
     setClientToken(token);
     getRobots();
