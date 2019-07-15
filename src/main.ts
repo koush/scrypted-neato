@@ -1,28 +1,35 @@
-import sdk from '@scrypted/sdk';
+import sdk, { Refresh, StartStop, Pause, Dock, Camera } from '@scrypted/sdk';
 import {ScryptedDeviceBase} from '@scrypted/sdk';
+const {mediaManager} = sdk;
 
 var botvac = require('node-botvac');
 var client = new botvac.Client();
 
 const {deviceManager, log} = sdk;
 
-class Neato extends ScryptedDeviceBase {
-    constructor(nativeId, robot, events) {
+class Neato extends ScryptedDeviceBase implements Refresh, StartStop, Pause, Dock, Camera {
+    refresher: Function;
+    robot: any;
+
+    constructor(nativeId, robot) {
         super(nativeId);
         this.robot = robot;
-        this.events = events;
 
         this.refresher = (err, data) => {
             log.d(data);
-            this.refresh();
+            this._refresh();
         }
+    }
+
+    getRefreshFrequency() {
+        return 60;
     }
 
     refresh(refreshInterface, userInitiated) {
         this._refresh();
     }
 
-    _refresh(cb) {
+    _refresh(cb?) {
         this.robot.getState((error, state) => {
             this.log.d(JSON.stringify(state));
             this.running = (state && state.state != 1) || false
@@ -34,10 +41,6 @@ class Neato extends ScryptedDeviceBase {
                 cb();
             }
         })
-    }
-
-    isPausable() {
-        return true;
     }
 
     start() {
@@ -59,6 +62,23 @@ class Neato extends ScryptedDeviceBase {
     resume() {
         this._refresh(() => this.robot.resumeCleaning(this.refresher));
     }
+
+    takePicture() {
+        return mediaManager.createMediaObject(new Promise<string>((resolve, reject) => {
+            console.log(this.robot);
+            this.robot.getPersistentMaps((err, maps) => {
+                if (err) {
+                    reject(new Error(JSON.stringify(err)));
+                    return;
+                }
+                if (!maps || !maps.length) {
+                    reject(new Error('no maps found'));
+                    return;
+                }
+                resolve(maps[0].url);
+            })
+        }), 'image/*');
+    }
 }
 
 
@@ -70,14 +90,11 @@ NeatoController.prototype.getDevice = function (id) {
 }
 
 NeatoController.prototype.updateRobots = function (robots) {
-    var interfaces = ['StartStop', 'Dock', 'Battery'];
-    var events = interfaces.slice();
-
-    interfaces.push('Refresh');
+    var interfaces = ['StartStop', 'Pause', 'Dock', 'Battery', 'Camera', 'Refresh'];
 
     this.robots = {};
     for (var robot of robots) {
-        this.robots[robot._serial] = new Neato(robot._serial, robot, events);
+        this.robots[robot._serial] = new Neato(robot._serial, robot);
     }
 
     var devices = robots.map(robot => {
@@ -85,7 +102,6 @@ NeatoController.prototype.updateRobots = function (robots) {
             name: robot.name,
             nativeId: robot._serial,
             interfaces: interfaces,
-            events: events,
             type: 'Vacuum',
         }
     })
@@ -139,7 +155,7 @@ NeatoController.prototype.onOauthCallback = function (callbackUrl) {
         return;
     }
 
-    localStorage.getItem('token', token);
+    localStorage.getItem('token');
     setClientToken(token);
     getRobots();
 }
