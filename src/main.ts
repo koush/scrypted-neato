@@ -155,7 +155,7 @@ NeatoController.prototype.onOauthCallback = function (callbackUrl) {
         return;
     }
 
-    localStorage.getItem('token');
+    localStorage.setItem('token', token);
     setClientToken(token);
     getRobots();
 }
@@ -200,7 +200,7 @@ else if (username && password) {
     });
 }
 else {
-    log.a('You must provide "username" and "password" values in your Script Settings or use the Authorize button to Log in with Neato.');
+    log.a('You must provide "username" and "password" values in your Script Settings or use the Login button to Log in with Neato.');
 }
 
 export default neatoController;
