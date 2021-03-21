@@ -27,7 +27,7 @@
       ]
    },
    "devDependencies": {
-      "@scrypted/sdk": "0.0.59",
+      "@scrypted/sdk": "0.0.63",
       "exports-loader": "^0.7.0",
       "webpack-merge": "^4.2.1"
    },
