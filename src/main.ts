@@ -1,4 +1,4 @@
-import sdk, { Refresh, StartStop, Pause, Dock, Camera } from '@scrypted/sdk';
+import sdk, { Refresh, StartStop, Pause, Dock, Camera, MediaObject } from '@scrypted/sdk';
 import {ScryptedDeviceBase} from '@scrypted/sdk';
 const {mediaManager} = sdk;
 
@@ -21,7 +21,7 @@ class Neato extends ScryptedDeviceBase implements Refresh, StartStop, Pause, Doc
         }
     }
 
-    getRefreshFrequency() {
+    async getRefreshFrequency(): Promise<number> {
         return 60;
     }
 
@@ -63,8 +63,8 @@ class Neato extends ScryptedDeviceBase implements Refresh, StartStop, Pause, Doc
         this._refresh(() => this.robot.resumeCleaning(this.refresher));
     }
 
-    takePicture() {
-        return mediaManager.createMediaObject(new Promise<string>((resolve, reject) => {
+    async takePicture(): Promise<MediaObject> {
+        const url = await new Promise<string>((resolve, reject) => {
             console.log(this.robot);
             this.robot.getPersistentMaps((err, maps) => {
                 if (err) {
@@ -77,7 +77,9 @@ class Neato extends ScryptedDeviceBase implements Refresh, StartStop, Pause, Doc
                 }
                 resolve(maps[0].url);
             })
-        }), 'image/*');
+        });
+        
+        return mediaManager.createMediaObject(url, 'image/*');
     }
 }
 
