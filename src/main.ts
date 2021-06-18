@@ -1,5 +1,7 @@
-import sdk, { Refresh, StartStop, Pause, Dock, Camera, MediaObject } from '@scrypted/sdk';
+import sdk, { Refresh, StartStop, Pause, Dock, Camera, MediaObject, ScryptedMimeTypes } from '@scrypted/sdk';
 import {ScryptedDeviceBase} from '@scrypted/sdk';
+import axios from 'axios';
+import {Buffer} from 'buffer';
 const {mediaManager} = sdk;
 
 var botvac = require('node-botvac');
@@ -25,7 +27,7 @@ class Neato extends ScryptedDeviceBase implements Refresh, StartStop, Pause, Doc
         return 60;
     }
 
-    refresh(refreshInterface, userInitiated) {
+    async refresh(refreshInterface, userInitiated) {
         this._refresh();
     }
 
@@ -43,30 +45,31 @@ class Neato extends ScryptedDeviceBase implements Refresh, StartStop, Pause, Doc
         })
     }
 
-    start() {
+    async start() {
         this._refresh(() => this.robot.startCleaning(this.refresher));
     }
 
-    dock() {
+    async dock() {
         this._refresh(() => this.robot.sendToBase(this.refresher));
     }
 
-    pause() {
+    async pause() {
         this._refresh(() => this.robot.pauseCleaning(this.refresher));
     }
 
-    stop() {
+    async stop() {
         this._refresh(() => this.robot.stopCleaning(this.refresher));
     }
 
-    resume() {
+    async resume() {
         this._refresh(() => this.robot.resumeCleaning(this.refresher));
     }
 
     async takePicture(): Promise<MediaObject> {
         const url = await new Promise<string>((resolve, reject) => {
             console.log(this.robot);
-            this.robot.getPersistentMaps((err, maps) => {
+            this.robot.getMaps((err, result) => {
+                const {maps } = result;
                 if (err) {
                     reject(new Error(JSON.stringify(err)));
                     return;
